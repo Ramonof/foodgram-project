@@ -1,10 +1,13 @@
 import json
-from django.shortcuts import redirect
-from django.http import JsonResponse, HttpResponse
-from django.views.decorators.http import require_http_methods
 
-from recipes.models import Recipe, Ingredient, RecipeIngredient
-from users.models import Favorites, Wishlist, Follow
+from django.contrib.auth import get_user_model
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect
+from django.views.decorators.http import require_http_methods
+from recipes.models import Ingredient, Recipe, RecipeIngredient
+from users.models import Favorite, Follow, Wishlist
+
+User = get_user_model()
 
 SUCCESS_RESPONSE = JsonResponse({"success": True})
 FAIL_RESPONSE = HttpResponse()
@@ -13,9 +16,11 @@ FAIL_RESPONSE = HttpResponse()
 @require_http_methods(["POST"])
 def add_favorite(request):
     body = json.loads(request.body)
+    if not int(body['id']):
+        return FAIL_RESPONSE
     recipe_id = int(body['id'])
     user = request.user
-    _, created = Favorites.objects.get_or_create(
+    _, created = Favorite.objects.get_or_create(
         user_id=user.id, recipe_id=recipe_id)
     return SUCCESS_RESPONSE if created else FAIL_RESPONSE
 
@@ -23,7 +28,7 @@ def add_favorite(request):
 @require_http_methods(["DELETE"])
 def remove_favorite(request, recipe_id):
     user = request.user
-    _, deleted = Favorites.objects.filter(
+    _, deleted = Favorite.objects.filter(
         user_id=user.id, recipe_id=recipe_id).delete()
     return SUCCESS_RESPONSE if deleted else FAIL_RESPONSE
 
@@ -31,6 +36,8 @@ def remove_favorite(request, recipe_id):
 @require_http_methods(["POST"])
 def add_wishlist(request):
     body = json.loads(request.body)
+    if not int(body['id']):
+        return FAIL_RESPONSE
     recipe_id = int(body['id'])
     user = request.user
     _, created = Wishlist.objects.get_or_create(
@@ -49,12 +56,14 @@ def remove_wishlist(request, recipe_id):
 @require_http_methods(["POST"])
 def add_subscription(request):
     body = json.loads(request.body)
+    if not int(body['id']):
+        return FAIL_RESPONSE
     following_id = int(body['id'])
     user = request.user
     if user.id != following_id:
         _, created = Follow.objects.get_or_create(
             subscriber_id=user.id, following_id=following_id)
-    return SUCCESS_RESPONSE if created else FAIL_RESPONSE
+    return SUCCESS_RESPONSE if created else JsonResponse({'success': False})
 
 
 @require_http_methods(["DELETE"])
@@ -66,7 +75,8 @@ def remove_subscription(request, following_id):
 
 
 def remove_recipe(request, username, recipe_id):
-    if request.user.username == username:
+    author = get_object_or_404(User, username=username)
+    if request.user == author:
         Recipe.objects.filter(id=recipe_id).delete()
         return redirect("user", username)
     return redirect("recipe", username, recipe_id)
@@ -89,7 +99,7 @@ def get_wishlist(request):
         recipe_id__in=wishlist_filter).order_by('ingredient')
     ingredients = {}
     for ingredient in ingredient_filter:
-        if ingredient.ingredient in ingredients.keys():
+        if ingredient.ingredient in ingredients:
             ingredients[ingredient.ingredient] += ingredient.amount
         else:
             ingredients[ingredient.ingredient] = ingredient.amount

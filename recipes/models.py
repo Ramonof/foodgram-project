@@ -1,14 +1,17 @@
-from django.db import models
 from django.contrib.auth import get_user_model
+from django.db import models
 from django.shortcuts import get_object_or_404
-
 from multiselectfield import MultiSelectField
 
 User = get_user_model()
 
-TAG_CHOICES = (('breakfast', 'Завтрак'),
-               ('lunch', 'Обед'),
-               ('dinner', 'Ужин'))
+BREAFAST = 'breakfast'
+LUNCH = 'lunch'
+DINNER = 'dinner'
+
+TAG_CHOICES = ((BREAFAST, 'Завтрак'),
+               (LUNCH, 'Обед'),
+               (DINNER, 'Ужин'))
 
 
 class Recipe(models.Model):
@@ -29,13 +32,13 @@ class Recipe(models.Model):
         blank=True, null=True,
         verbose_name="Изображение")
 
-    def __str__(self):
-        return self.title
-
     class Meta:
         ordering = ["-pub_date"]
         verbose_name = 'Рецепты'
         verbose_name_plural = 'Рецепты'
+
+    def __str__(self):
+        return self.title
 
 
 class Ingredient(models.Model):
@@ -45,12 +48,12 @@ class Ingredient(models.Model):
     dimension = models.CharField(
         max_length=25, verbose_name="Единица измерения")
 
-    def __str__(self):
-        return f"{self.title} / {self.dimension}"
-
     class Meta:
         verbose_name = 'Ингредиенты'
         verbose_name_plural = 'Ингредиенты'
+
+    def __str__(self):
+        return f"{self.title} / {self.dimension}"
 
 
 class RecipeIngredient(models.Model):

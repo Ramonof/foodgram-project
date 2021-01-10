@@ -16,7 +16,7 @@ User = get_user_model()
 def index(request):
     tags, tags_filter = tag_collect(request)
     if tags_filter:
-        recipes = Recipe.objects.filter(tags_filter).all()
+        recipes = Recipe.objects.filter(tags_filter)
     else:
         recipes = Recipe.objects.all()
     paginator = Paginator(recipes, 6)
@@ -35,10 +35,10 @@ def user_page(request, username):
     tags, tags_filter = tag_collect(request)
     if tags_filter:
         recipes = Recipe.objects.filter(tags_filter).filter(
-            author_id=author.id).all()
+            author_id=author.id)
     else:
         recipes = Recipe.objects.filter(author_id=author.id)
-    paginator = Paginator(recipes, 6)
+    paginator = Paginator(recipes, 9)
     page_number = request.GET.get("page")
     page = paginator.get_page(page_number)
     context = {
@@ -84,7 +84,7 @@ def new_recipe(request):
     btn_caption = "Создать рецепт"
     form = RecipeForm(request.POST or None, files=request.FILES or None)
 
-    if request.method == "POST" and form.is_valid():
+    if form.is_valid():
         ingredients_names = request.POST.getlist('nameIngredient')
         ingredients_values = request.POST.getlist('valueIngredient')
         if len(ingredients_names) == len(ingredients_values):
@@ -94,16 +94,16 @@ def new_recipe(request):
         new_recipe = form.save(commit=False)
         new_recipe.author = request.user
         new_recipe.save()
-        for i in range(count):
+        zipped = zip(ingredients_names, ingredients_values)
+        for i in list(zipped):
             RecipeIngredient.add_ingredient(
                 RecipeIngredient,
                 new_recipe.id,
-                ingredients_names[i],
-                ingredients_values[i]
+                i[0],
+                i[1]
             )
         return redirect("index")
 
-    form = RecipeForm()
     context = {
         'form_title': form_title,
         'btn_caption': btn_caption,
@@ -131,7 +131,7 @@ def edit_recipe(request, username, recipe_id):
     form = RecipeForm(request.POST or None,
                       files=request.FILES or None, instance=recipe)
 
-    if request.method == "POST" and form.is_valid():
+    if form.is_valid():
         ingredients_names = request.POST.getlist('nameIngredient')
         ingredients_values = request.POST.getlist('valueIngredient')
         if len(ingredients_names) == len(ingredients_values):
@@ -141,12 +141,13 @@ def edit_recipe(request, username, recipe_id):
                             username=username, recipe_id=recipe_id)
         form.save()
         RecipeIngredient.objects.filter(recipe_id=recipe.id).delete()
-        for i in range(count):
+        zipped = zip(ingredients_names, ingredients_values)
+        for i in list(zipped):
             RecipeIngredient.add_ingredient(
                 RecipeIngredient,
                 recipe.id,
-                ingredients_names[i],
-                ingredients_values[i]
+                i[0],
+                i[1]
             )
         return recipe_redirect
 
@@ -169,11 +170,11 @@ def favorites(request):
     tags, tags_filter = tag_collect(request)
     if tags_filter:
         recipes = Recipe.objects.filter(tags_filter).filter(
-            favorite_recipe__user=user).all()
+            favorite_recipe__user=user)
     else:
         recipes = Recipe.objects.filter(
-            favorite_recipe__user=user).all()
-    paginator = Paginator(recipes, 6)
+            favorite_recipe__user=user)
+    paginator = Paginator(recipes, 12)
     page_number = request.GET.get("page")
     page = paginator.get_page(page_number)
     context = {
@@ -188,19 +189,11 @@ def favorites(request):
 def wishlist(request):
     user = request.user
     recipes = Recipe.objects.filter(
-        wishlist_recipe__user=user).all()
+        wishlist_recipe__user=user)
     context = {
         'recipes': recipes
     }
     return render(request, 'wishlist.html', context)
-
-
-def page_not_found(request, exception):
-    return render(request, "misc/404.html", {"path": request.path}, status=404)
-
-
-def server_error(request):
-    return render(request, "misc/500.html", status=500)
 
 
 def tag_collect(request):
