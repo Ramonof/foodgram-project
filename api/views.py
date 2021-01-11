@@ -16,9 +16,10 @@ FAIL_RESPONSE = HttpResponse()
 @require_http_methods(["POST"])
 def add_favorite(request):
     body = json.loads(request.body)
-    if not int(body['id']):
+    try:
+        recipe_id = int(body['id'])
+    except:
         return FAIL_RESPONSE
-    recipe_id = int(body['id'])
     user = request.user
     _, created = Favorite.objects.get_or_create(
         user_id=user.id, recipe_id=recipe_id)
@@ -36,9 +37,10 @@ def remove_favorite(request, recipe_id):
 @require_http_methods(["POST"])
 def add_wishlist(request):
     body = json.loads(request.body)
-    if not int(body['id']):
+    try:
+        recipe_id = int(body['id'])
+    except:
         return FAIL_RESPONSE
-    recipe_id = int(body['id'])
     user = request.user
     _, created = Wishlist.objects.get_or_create(
         user_id=user.id, recipe_id=recipe_id)
@@ -56,14 +58,17 @@ def remove_wishlist(request, recipe_id):
 @require_http_methods(["POST"])
 def add_subscription(request):
     body = json.loads(request.body)
-    if not int(body['id']):
+    try:
+        following_id = int(body['id'])
+    except:
         return FAIL_RESPONSE
-    following_id = int(body['id'])
     user = request.user
     if user.id != following_id:
         _, created = Follow.objects.get_or_create(
             subscriber_id=user.id, following_id=following_id)
-    return SUCCESS_RESPONSE if created else JsonResponse({'success': False})
+    else:
+        return FAIL_RESPONSE
+    return SUCCESS_RESPONSE if created else FAIL_RESPONSE
 
 
 @require_http_methods(["DELETE"])

@@ -94,13 +94,13 @@ def new_recipe(request):
         new_recipe = form.save(commit=False)
         new_recipe.author = request.user
         new_recipe.save()
-        zipped = zip(ingredients_names, ingredients_values)
-        for i in list(zipped):
+        ingridients_names_values = zip(ingredients_names, ingredients_values)
+        for ingridient in list(ingridients_names_values):
             RecipeIngredient.add_ingredient(
                 RecipeIngredient,
                 new_recipe.id,
-                i[0],
-                i[1]
+                ingridient[0],
+                ingridient[1]
             )
         return redirect("index")
 
@@ -141,13 +141,13 @@ def edit_recipe(request, username, recipe_id):
                             username=username, recipe_id=recipe_id)
         form.save()
         RecipeIngredient.objects.filter(recipe_id=recipe.id).delete()
-        zipped = zip(ingredients_names, ingredients_values)
-        for i in list(zipped):
+        ingredients_names_values = zip(ingredients_names, ingredients_values)
+        for ingredient in list(ingredients_names_values):
             RecipeIngredient.add_ingredient(
                 RecipeIngredient,
                 recipe.id,
-                i[0],
-                i[1]
+                ingredient[0],
+                ingredient[1]
             )
         return recipe_redirect
 
