@@ -13,3 +13,5 @@ docker-compose exec web python manage.py migrate
 Чтобы загрузить список ингредиентов в БД:
 
 docker-compose exec web python manage.py loaddata ingredients.json
+
+Ссылка на сайт http://178.154.234.70/
