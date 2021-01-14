@@ -5,9 +5,9 @@ WORKDIR /static
 
 RUN rm /etc/nginx/conf.d/default.conf
 
-COPY nginx.conf /etc/nginx/conf.d
+# COPY nginx.conf /etc/nginx/conf.d
 
-RUN chown -R nginx:nginx /static
+# RUN chown -R nginx:nginx /static
 
-WORKDIR /media
-RUN chown -R nginx:nginx /media
+# WORKDIR /media
+# RUN chown -R nginx:nginx /media
